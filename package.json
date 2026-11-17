@@ -1,0 +1,58 @@
+{
+  "name": "n8n-nodes-switchfile",
+  "version": "0.1.1",
+  "description": "n8n nodes for switchfile: convert files and URLs between formats and start workflows when a conversion finishes.",
+  "license": "MIT",
+  "homepage": "https://github.com/switchfile/n8n-nodes-switchfile#readme",
+  "keywords": [
+    "n8n-community-node-package",
+    "switchfile",
+    "file-conversion",
+    "converter"
+  ],
+  "author": {
+    "name": "Aura UG (haftungsbeschränkt)",
+    "email": "hello@switchfile.io"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/switchfile/n8n-nodes-switchfile.git"
+  },
+  "bugs": {
+    "url": "https://github.com/switchfile/n8n-nodes-switchfile/issues"
+  },
+  "scripts": {
+    "build": "n8n-node build",
+    "build:watch": "tsc --watch",
+    "dev": "n8n-node dev",
+    "lint": "n8n-node lint",
+    "lint:fix": "n8n-node lint --fix",
+    "release": "n8n-node release",
+    "prepublishOnly": "n8n-node prerelease"
+  },
+  "files": [
+    "dist"
+  ],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "strict": true,
+    "credentials": [
+      "dist/credentials/SwitchfileApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/Switchfile/Switchfile.node.js",
+      "dist/nodes/SwitchfileTrigger/SwitchfileTrigger.node.js"
+    ]
+  },
+  "devDependencies": {
+    "@n8n/node-cli": "0.55.5",
+    "eslint": "9.32.0",
+    "n8n-workflow": "2.16.0",
+    "prettier": "3.6.2",
+    "release-it": "^21.1.0",
+    "typescript": "5.9.2"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  }
+}

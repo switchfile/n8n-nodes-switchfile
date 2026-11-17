@@ -1,0 +1,58 @@
+# Publishes n8n-nodes-switchfile to npm when a tag v<version> is pushed. Uses npm Trusted Publishing (OIDC), so no
+# npm token is stored; npm adds the provenance statement that n8n requires for verified community nodes.
+name: publish
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      # Trusted Publishing needs npm 11.5.1 or later; Node 24 ships with it.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      - name: Tag matches version
+        run: |
+          version="$(node -p 'require("./package.json").version')"
+          [ "${GITHUB_REF_NAME}" = "v${version}" ] || { echo "Tag ${GITHUB_REF_NAME} does not match version ${version}" >&2; exit 1; }
+          grep -q "n8n-nodes-switchfile/${version}'" nodes/shared/api.ts || { echo "USER_AGENT in nodes/shared/api.ts is not ${version}" >&2; exit 1; }
+
+      - name: Install, lint, build
+        run: |
+          npm install --no-audit --no-fund --ignore-scripts
+          npm run lint
+          npm run build
+
+      - name: n8n community package scan
+        run: npx --yes @n8n/scan-community-package@0.44.0 .
+
+      - name: Package contents
+        run: |
+          npm pack --dry-run --json --ignore-scripts > "$RUNNER_TEMP/pack.json"
+          node -e '
+            const files = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))[0].files.map((f) => f.path).sort();
+            const bad = files.filter((p) => !/^(package\.json|README\.md|CHANGELOG\.md|LICENSE|dist\/.+)$/.test(p) || p.endsWith(".tsbuildinfo"));
+            if (bad.length) { console.error("Unexpected files in the package:", bad); process.exit(1); }
+            console.log(files.join("\n"));
+          ' "$RUNNER_TEMP/pack.json"
+
+      # prepublishOnly (n8n-node prerelease) only allows publishing through `n8n-node release`; the checks above
+      # replace it.
+      - name: Publish with provenance
+        run: npm publish --access public --ignore-scripts --provenance
